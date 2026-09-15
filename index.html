@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0f1420" />
+  <meta name="theme-color" content="#f6f8fb" />
   <meta name="description" content="GRID_EDITOR — professional, private XML grid editor in your browser." />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=3" />
   <title>GRID_EDITOR</title>
 </head>
 <body>
@@ -15,12 +15,19 @@
   <header class="topbar">
     <div class="brand-wrap"><div class="logo">G</div><div><div class="brand">GRID_EDITOR</div><div class="tagline">Professional XML Grid Editor</div></div></div>
     <div class="toolbar">
-      <button class="btn" id="openBtn">Open XML</button><button class="btn btn-primary" id="saveBtn">Save</button><button class="btn" id="saveAsBtn">Save as</button><span class="toolbar-sep"></span>
-      <button class="icon-btn" id="undoBtn" title="Undo">↶</button><button class="icon-btn" id="redoBtn" title="Redo">↷</button><button class="btn" id="validateBtn">✓ Check XML</button><button class="icon-btn" id="themeBtn" title="Theme">◐</button>
+      <button class="btn" id="openBtn">Open XML</button>
+      <button class="btn btn-primary" id="saveBtn">Save</button>
+      <button class="btn" id="saveAsBtn">Save as</button>
+      <span class="toolbar-sep"></span>
+      <button class="icon-btn" id="undoBtn" title="Undo">↶</button>
+      <button class="icon-btn" id="redoBtn" title="Redo">↷</button>
+      <button class="btn" id="validateBtn">✓ Check XML</button>
+      <button class="icon-btn" id="themeBtn" title="Theme">◐</button>
     </div>
-    <input id="fileInput" type="file" accept=".xml,.xsd,.svg,text/xml,application/xml" hidden />
+    <input id="fileInput" type="file" accept=".xml,.xsd,.svg,text/xml,application/xml,application/xhtml+xml" hidden />
   </header>
   <div class="privacy-strip"><span class="privacy-dot"></span><b>Local-only processing</b><span>Your XML stays in this browser.</span><span class="file-status" id="fileStatus">No document open</span></div>
+
   <div class="workspace">
     <aside class="sidebar left-sidebar">
       <div class="side-tabs"><button class="side-tab active" data-side="tables">AUTO TABLES</button><button class="side-tab" data-side="tree">TREE</button></div>
@@ -28,25 +35,109 @@
       <section class="side-panel" id="treePanel"><div class="sidebar-head"><span>XML TREE</span><button class="mini-btn" id="collapseAllBtn" title="Collapse all">−</button></div><div class="tree-view" id="treeView"></div></section>
       <div id="sidebarStats" class="panel-hint">0 elements · 0 tables</div>
     </aside>
+
     <main class="main-pane">
-      <nav class="tabs"><button class="tab active" data-view="grid">Grid</button><button class="tab" data-view="source">Source</button><button class="tab" data-view="xpath">XPath</button><button class="tab" data-view="xsd">XSD</button><button class="tab" data-view="diff">Diff</button></nav>
+      <nav class="tabs">
+        <button class="tab active" data-view="grid">Grid</button>
+        <button class="tab" data-view="source">Source</button>
+        <button class="tab" data-view="xpath">XPath</button>
+        <button class="tab" data-view="xsd">XSD</button>
+        <button class="tab" data-view="diff">Diff</button>
+      </nav>
+
       <section class="view active" id="gridView">
-        <div class="grid-toolbar"><div><div class="grid-title" id="gridTitle">No table selected</div><div class="grid-subtitle" id="gridSubtitle">Open XML to begin</div></div><div class="grid-actions"><label class="search-wrap">⌕ <input id="gridSearch" placeholder="Filter table…" /></label><button class="btn" id="addRowBtn">＋ Row</button><button class="btn" id="duplicateRowBtn">Duplicate</button><button class="btn danger-ghost" id="deleteRowBtn">Delete</button><button class="btn" id="addFieldBtn">＋ Field</button></div></div>
+        <div class="grid-toolbar">
+          <div><div class="grid-title" id="gridTitle">No table selected</div><div class="grid-subtitle" id="gridSubtitle">Open XML to begin</div></div>
+          <div class="grid-actions">
+            <label class="search-wrap">⌕ <input id="gridSearch" placeholder="Filter table…" /></label>
+            <button class="btn" id="addRowBtn">＋ Row</button>
+            <button class="btn" id="duplicateRowBtn">Duplicate</button>
+            <button class="btn danger-ghost" id="deleteRowBtn">Delete</button>
+            <button class="btn" id="addFieldBtn">＋ Field</button>
+          </div>
+        </div>
         <div class="empty-state" id="gridEmpty"><div class="empty-icon">&lt;/&gt;</div><h2>Open an XML file</h2><p>GRID_EDITOR converts repeated XML structures into an editable spreadsheet-like grid. Nothing is uploaded.</p><div><button class="btn btn-primary" id="emptyOpenBtn">Open XML</button><button class="btn" id="loadSampleBtn">Load demo</button></div></div>
         <div class="grid-wrap hidden" id="gridWrap"><table class="data-grid" id="dataGrid"></table></div>
         <div class="grid-footer hidden" id="gridFooter"><span id="selectionStatus">0 selected</span><div class="pagination"><button class="mini-btn" id="prevPageBtn">‹</button><span id="pageStatus">Page 1 / 1</span><button class="mini-btn" id="nextPageBtn">›</button><select id="pageSizeSelect"><option value="50">50</option><option value="100" selected>100</option><option value="250">250</option><option value="500">500</option></select><span>rows/page</span></div></div>
       </section>
-      <section class="view" id="sourceView"><div class="view-toolbar"><div><b>XML Source</b><span class="muted">Edit raw XML and apply it back to the grid.</span></div><div><button class="btn" id="prettyBtn">Pretty</button> <button class="btn" id="minifyBtn">Minify</button> <button class="btn btn-primary" id="applySourceBtn">Apply source</button></div></div><div class="editor-frame"><pre class="line-numbers" id="lineNumbers">1</pre><textarea class="code-editor" id="sourceEditor" spellcheck="false" placeholder="Open an XML document…"></textarea></div><div class="message-bar" id="sourceMessage">Source is synchronized with the current document.</div></section>
-      <section class="view" id="xpathView"><div class="feature-page"><div class="feature-head"><div><h2>XPath Console</h2><p>Run XPath expressions against the live XML document.</p></div><span class="badge">XPath</span></div><div class="xpath-runner"><input id="xpathInput" class="large-input mono" value="//*" placeholder="//product[@active='true']"/><button class="btn btn-primary" id="runXpathBtn">Run</button></div><div class="quick-chips"><button class="chip" data-xpath="//*">All elements</button><button class="chip" data-xpath="//@*">All attributes</button><button class="chip" data-xpath="count(//*)">Count elements</button><button class="chip" data-xpath="//*[not(*)]">Leaf nodes</button></div><div class="result-summary" id="xpathSummary">No query run yet.</div><div class="xpath-results" id="xpathResults"><div class="empty-mini">XPath results appear here.</div></div></div></section>
-      <section class="view" id="xsdView"><div class="feature-page"><div class="feature-head"><div><h2>XSD Validation</h2><p>Open or paste a schema and validate the active XML.</p></div><div><span class="badge neutral" id="xsdStatus">Not loaded</span> <span class="badge neutral" id="xsdCount">0 issues</span></div></div><div class="xsd-grid"><div class="card"><div class="card-head"><b>Schema</b><button class="btn" id="openXsdBtn">Open XSD</button></div><textarea class="code-editor standalone" id="xsdEditor" spellcheck="false" placeholder="Paste XSD here…"></textarea></div><div class="card"><div class="card-head"><b>Validation results</b><button class="btn btn-primary" id="runXsdBtn">Validate</button></div><div class="validation-results" id="xsdResults"><div class="empty-mini">Load a schema to start validation.</div></div></div></div><div class="note">Validation runs locally in your browser; your XML and XSD are not uploaded.</div><input id="xsdFileInput" type="file" accept=".xsd,.xml" hidden /></div></section>
-      <section class="view" id="diffView"><div class="feature-page"><div class="feature-head"><div><h2>XML Diff</h2><p>Compare the active document with another XML file.</p></div><div><button class="btn" id="openCompareBtn">Open comparison XML</button> <button class="btn btn-primary" id="runDiffBtn">Compare</button></div></div><div class="result-summary" id="diffMeta">Choose a comparison file.</div><div class="diff-results" id="diffResults"><div class="empty-mini">Diff results appear here.</div></div><input id="compareFileInput" type="file" accept=".xml,.xsd,.svg,text/xml,application/xml" hidden /></div></section>
+
+      <section class="view" id="sourceView">
+        <div class="view-toolbar"><div><b>XML Source</b><span class="muted">Edit raw XML and apply it back to the grid.</span></div><div><button class="btn" id="prettyBtn">Pretty</button> <button class="btn" id="minifyBtn">Minify</button> <button class="btn btn-primary" id="applySourceBtn">Apply source</button></div></div>
+        <div class="editor-frame"><pre class="line-numbers" id="lineNumbers">1</pre><textarea class="code-editor" id="sourceEditor" spellcheck="false" placeholder="Open an XML document…"></textarea></div>
+        <div class="message-bar" id="sourceMessage">Source is synchronized with the current document.</div>
+      </section>
+
+      <section class="view" id="xpathView">
+        <div class="feature-page">
+          <div class="feature-head"><div><h2>XPath Console</h2><p>Run XPath expressions against the live XML document.</p></div><span class="badge">Local query</span></div>
+          <div class="xpath-runner"><input id="xpathInput" class="large-input mono" value="//*" placeholder="//product[@active='true']"/><button class="btn btn-primary" id="runXpathBtn">Run</button></div>
+          <div class="quick-chips"><button class="chip" data-xpath="//*">All elements</button><button class="chip" data-xpath="//@*">All attributes</button><button class="chip" data-xpath="count(//*)">Count elements</button><button class="chip" data-xpath="//*[not(*)]">Leaf nodes</button></div>
+          <div class="result-summary" id="xpathSummary">No query run yet.</div><div class="xpath-results" id="xpathResults"><div class="empty-mini">XPath results appear here.</div></div>
+        </div>
+      </section>
+
+      <section class="view" id="xsdView">
+        <div class="feature-page">
+          <div class="feature-head"><div><h2>XSD Validation</h2><p>Open or paste a schema and validate the active XML.</p></div><div><span class="badge neutral" id="xsdStatus">Not loaded</span> <span class="badge neutral" id="xsdCount">0 issues</span></div></div>
+          <div class="xsd-grid">
+            <div class="card"><div class="card-head"><b>Schema</b><button class="btn" id="openXsdBtn">Open XSD</button></div><textarea class="code-editor standalone" id="xsdEditor" spellcheck="false" placeholder="Paste XSD here…"></textarea></div>
+            <div class="card"><div class="card-head"><b>Validation results</b><button class="btn btn-primary" id="runXsdBtn">Validate</button></div><div class="validation-results" id="xsdResults"><div class="empty-mini">Load a schema to start validation.</div></div></div>
+          </div><div class="note">The browser validator checks common XSD structure, required attributes, occurrence constraints, primitive types, enumerations, lengths and patterns without uploading your files.</div>
+          <input id="xsdFileInput" type="file" accept=".xsd,.xml" hidden />
+        </div>
+      </section>
+
+      <section class="view" id="diffView">
+        <div class="feature-page">
+          <div class="feature-head"><div><h2>XML Diff</h2><p>Compare the active document with another XML file.</p></div><div><button class="btn" id="openCompareBtn">Open comparison XML</button> <button class="btn btn-primary" id="runDiffBtn">Compare</button></div></div>
+          <div class="result-summary" id="diffMeta">Choose a comparison file.</div><div class="diff-results" id="diffResults"><div class="empty-mini">Diff results appear here.</div></div>
+          <input id="compareFileInput" type="file" accept=".xml,.xsd,.svg,text/xml,application/xml,application/xhtml+xml" hidden />
+        </div>
+      </section>
     </main>
-    <aside class="sidebar inspector-sidebar"><div class="sidebar-head"><b>INSPECTOR</b><span class="badge neutral">LIVE</span></div><div class="inspector-empty" id="inspectorEmpty">Select a node in the tree or a row in the grid to inspect and edit its structure.</div><div class="inspector hidden" id="inspector"><div class="inspector-path" id="inspectorPath"></div><div class="inspector-section"><div class="section-title">Element</div><label>Name<input id="nodeNameInput" /></label><label>Text<textarea id="nodeTextInput" rows="4"></textarea></label><button class="btn btn-primary full" id="applyInspectorBtn">Apply changes</button></div><div class="inspector-section"><div class="row-between"><div class="section-title">Attributes</div><button class="mini-btn" id="addAttributeBtn">＋</button></div><div id="attributeList"></div></div><div class="inspector-section"><div class="section-title">Structure</div><div class="stack-actions"><button class="btn" id="addChildBtn">＋ Child element</button><button class="btn" id="duplicateNodeBtn">Duplicate node</button><button class="btn danger-ghost" id="deleteNodeBtn">Delete node</button></div></div></div></aside>
+
+    <aside class="sidebar inspector-sidebar">
+      <div class="sidebar-head"><b>INSPECTOR</b><span class="badge neutral">LIVE</span></div>
+      <div class="inspector-empty" id="inspectorEmpty">Select a node in the tree or a row in the grid to inspect and edit its structure.</div>
+      <div class="inspector hidden" id="inspector">
+        <div class="inspector-path" id="inspectorPath"></div>
+        <div class="inspector-section"><div class="section-title">Element</div><label>Name<input id="nodeNameInput" /></label><label>Text<textarea id="nodeTextInput" rows="4"></textarea></label><button class="btn btn-primary full" id="applyInspectorBtn">Apply changes</button></div>
+        <div class="inspector-section"><div class="row-between"><div class="section-title">Attributes</div><button class="mini-btn" id="addAttributeBtn">＋</button></div><div id="attributeList"></div></div>
+        <div class="inspector-section"><div class="section-title">Structure</div><div class="stack-actions"><button class="btn" id="addChildBtn">＋ Child element</button><button class="btn" id="duplicateNodeBtn">Duplicate node</button><button class="btn danger-ghost" id="deleteNodeBtn">Delete node</button></div></div>
+      </div>
+    </aside>
   </div>
+
   <footer class="statusbar"><span id="statusLeft">Ready</span><div class="status-right"><span class="status-pill ok" id="wellFormedStatus">No document</span><span id="nodeCountStatus">0 nodes</span><span id="sizeStatus">0 B</span></div></footer>
 </div>
-<div class="drop-overlay hidden" id="dropOverlay"><div class="drop-card"><div class="drop-icon">⇩</div><b>Drop XML here</b><span>Processed locally in your browser</span></div></div><div class="toast-host" id="toastHost"></div>
+
+<div class="drop-overlay hidden" id="dropOverlay"><div class="drop-card"><div class="drop-icon">⇩</div><b>Drop XML here</b><span>Processed locally in your browser</span></div></div>
+<div class="toast-host" id="toastHost"></div>
+
 <dialog class="modal" id="promptDialog"><form id="promptForm" method="dialog"><div class="modal-head"><b id="promptTitle">Enter value</b><button class="mini-btn" value="cancel">×</button></div><label><span id="promptLabel">Value</span><input id="promptInput" autocomplete="off" /></label><div class="modal-actions"><button class="btn" value="cancel">Cancel</button><button class="btn btn-primary" id="promptOkBtn" value="default">OK</button></div></form></dialog>
-<script src="./app.js"></script>
+
+<script>
+(() => {
+  document.documentElement.classList.add('light');
+  try {
+    const k='grid-editor-theme';
+    if (!localStorage.getItem(k)) localStorage.setItem(k,'light');
+  } catch (e) {
+    try { Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem:k=>k==='grid-editor-theme'?'light':null,setItem(){},removeItem(){},clear(){}}}); } catch (_) {}
+  }
+})();
+</script>
+<script src="./app.js?v=4"></script>
+<script>
+(() => {
+  const input=document.getElementById('fileInput');
+  const directOpen=()=>{ if(!input) return; input.value=''; input.click(); };
+  const a=document.getElementById('openBtn'), b=document.getElementById('emptyOpenBtn');
+  if(a) a.onclick=directOpen;
+  if(b) b.onclick=directOpen;
+  if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{}); }
+  if('caches' in window){ caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('grid-editor-')).map(k=>caches.delete(k)))).catch(()=>{}); }
+})();
+</script>
 </body>
 </html>
