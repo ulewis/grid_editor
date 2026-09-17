@@ -24,17 +24,50 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Keep saved XML compact
+      - name: Fix XML pretty formatting
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('app.js')
           s = p.read_text()
-          old = "const text=pretty(serialize()),blob="
-          new = "const text=serialize().replace(/>\\s+</g,'><').trim(),blob="
-          if old not in s:
-              raise SystemExit('save() signature not found')
-          p.write_text(s.replace(old, new, 1))
+          start = s.index('function pretty(xml){')
+          end = s.index('\nfunction esc(', start)
+          new = r'''function pretty(xml){
+            try{
+              const declaration=(String(xml).match(/^\s*(<\?xml[^?]*\?>)/i)||[])[1]||'';
+              const doc=parseXml(xml), serializer=new XMLSerializer(), indent='    ';
+              const fmt=(node,depth)=>{
+                const pad=indent.repeat(depth);
+                if(node.nodeType===Node.COMMENT_NODE)return pad+'<!--'+node.nodeValue+'-->';
+                if(node.nodeType===Node.PROCESSING_INSTRUCTION_NODE)return pad+'<?'+node.target+' '+node.data+'?>';
+                if(node.nodeType!==Node.ELEMENT_NODE)return'';
+                const elementChildren=[...node.children];
+                const meaningful=[...node.childNodes].filter(n=>!(n.nodeType===Node.TEXT_NODE&&!n.nodeValue.trim()));
+                if(!meaningful.length)return pad+serializer.serializeToString(node.cloneNode(false));
+                if(!elementChildren.length){
+                  const clone=node.cloneNode(false);
+                  const open=serializer.serializeToString(clone).replace(/\/>$/,'>');
+                  const value=node.textContent.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                  return pad+open+value+'</'+node.nodeName+'>';
+                }
+                const open=serializer.serializeToString(node.cloneNode(false)).replace(/\/>$/,'>');
+                const lines=[pad+open];
+                for(const child of meaningful){
+                  if(child.nodeType===Node.ELEMENT_NODE||child.nodeType===Node.COMMENT_NODE||child.nodeType===Node.PROCESSING_INSTRUCTION_NODE){
+                    const rendered=fmt(child,depth+1);if(rendered)lines.push(rendered);
+                  }else if((child.nodeType===Node.TEXT_NODE||child.nodeType===Node.CDATA_SECTION_NODE)&&child.nodeValue.trim()){
+                    const value=child.nodeValue.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    lines.push(indent.repeat(depth+1)+value);
+                  }
+                }
+                lines.push(pad+'</'+node.nodeName+'>');
+                return lines.join('\n');
+              };
+              const body=fmt(doc.documentElement,0);
+              return declaration?declaration+'\n'+body:body;
+            }catch{return xml}
+          }'''
+          p.write_text(s[:start] + new + s[end:])
           PY
 
       - name: Configure Pages
