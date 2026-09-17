@@ -35,29 +35,29 @@ jobs:
           new = r'''function pretty(xml){
             try{
               const declaration=(String(xml).match(/^\s*(<\?xml[^?]*\?>)/i)||[])[1]||'';
-              const doc=parseXml(xml), serializer=new XMLSerializer(), indent='    ';
+              const doc=parseXml(xml), indent='    ';
+              const escText=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+              const escAttr=v=>escText(v).replace(/"/g,'&quot;');
+              const openTag=node=>'<'+node.nodeName+[...node.attributes].map(a=>' '+a.name+'="'+escAttr(a.value)+'"').join('')+'>';
+              const emptyTag=node=>'<'+node.nodeName+[...node.attributes].map(a=>' '+a.name+'="'+escAttr(a.value)+'"').join('')+'/>';
               const fmt=(node,depth)=>{
                 const pad=indent.repeat(depth);
                 if(node.nodeType===Node.COMMENT_NODE)return pad+'<!--'+node.nodeValue+'-->';
-                if(node.nodeType===Node.PROCESSING_INSTRUCTION_NODE)return pad+'<?'+node.target+' '+node.data+'?>';
+                if(node.nodeType===Node.PROCESSING_INSTRUCTION_NODE)return pad+'<?'+node.target+(node.data?' '+node.data:'')+'?>';
                 if(node.nodeType!==Node.ELEMENT_NODE)return'';
-                const elementChildren=[...node.children];
-                const meaningful=[...node.childNodes].filter(n=>!(n.nodeType===Node.TEXT_NODE&&!n.nodeValue.trim()));
-                if(!meaningful.length)return pad+serializer.serializeToString(node.cloneNode(false));
+                const children=[...node.childNodes].filter(n=>!(n.nodeType===Node.TEXT_NODE&&!n.nodeValue.trim()));
+                const elementChildren=children.filter(n=>n.nodeType===Node.ELEMENT_NODE);
+                if(!children.length)return pad+emptyTag(node);
                 if(!elementChildren.length){
-                  const clone=node.cloneNode(false);
-                  const open=serializer.serializeToString(clone).replace(/\/>$/,'>');
-                  const value=node.textContent.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                  return pad+open+value+'</'+node.nodeName+'>';
+                  const value=node.textContent.trim();
+                  return pad+openTag(node)+escText(value)+'</'+node.nodeName+'>';
                 }
-                const open=serializer.serializeToString(node.cloneNode(false)).replace(/\/>$/,'>');
-                const lines=[pad+open];
-                for(const child of meaningful){
+                const lines=[pad+openTag(node)];
+                for(const child of children){
                   if(child.nodeType===Node.ELEMENT_NODE||child.nodeType===Node.COMMENT_NODE||child.nodeType===Node.PROCESSING_INSTRUCTION_NODE){
                     const rendered=fmt(child,depth+1);if(rendered)lines.push(rendered);
                   }else if((child.nodeType===Node.TEXT_NODE||child.nodeType===Node.CDATA_SECTION_NODE)&&child.nodeValue.trim()){
-                    const value=child.nodeValue.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                    lines.push(indent.repeat(depth+1)+value);
+                    lines.push(indent.repeat(depth+1)+escText(child.nodeValue.trim()));
                   }
                 }
                 lines.push(pad+'</'+node.nodeName+'>');
